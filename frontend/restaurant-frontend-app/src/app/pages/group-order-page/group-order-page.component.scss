@@ -1,4 +1,4 @@
-@use 'app/shared/styles/abstracts/colors' as color;
+﻿@use 'app/shared/styles/abstracts/colors' as color;
 
 .page {
   max-width: 800px;
@@ -54,6 +54,33 @@
 
       p {
         margin: 4px 0;
+      }
+    }
+
+    .sync-bar {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8125rem;
+      color: color.$neutral-600;
+
+      .sync-error {
+        color: color.$red-400;
+      }
+
+      .btn-refresh {
+        background: none;
+        border: 1px solid color.$neutral-200;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: color.$neutral-900;
+
+        &:hover {
+          background-color: color.$neutral-100;
+        }
       }
     }
   }

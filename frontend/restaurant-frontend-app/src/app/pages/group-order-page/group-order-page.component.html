@@ -30,6 +30,17 @@
           </p>
         </div>
       }
+
+      <div class="sync-bar">
+        @if (refreshError()) {
+          <span class="sync-error">{{ refreshError() }}</span>
+        } @else if (lastUpdatedAt()) {
+          <span class="sync-time">Updated at {{ lastUpdatedAt() | date:'mediumTime' }}</span>
+        }
+        @if (!isSubmitted()) {
+          <button type="button" class="btn btn-refresh" (click)="refreshNow()">Refresh</button>
+        }
+      </div>
     </header>
 
     @if (!hasAnyDishesAdded()) {

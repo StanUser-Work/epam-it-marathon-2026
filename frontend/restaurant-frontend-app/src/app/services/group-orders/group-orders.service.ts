@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { API_BASE_URL } from '@app/shared/config/api-base-url.token';
+import { SKIP_ERROR_TOAST } from '@app/auth/skip-error-toast.context';
 import { GroupSessionsResponse } from '@app/models/group-orders/group-sessions-response.model';
 import { GuestInvite } from '@app/models/reservations/guest-invite.model';
 
@@ -19,12 +20,23 @@ export interface SubmitOrderResponseItem {
   quantity: number;
 }
 
+export interface RequestOptions {
+  silent?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class GroupOrdersService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  private createHttpContext(options?: RequestOptions): HttpContext | undefined {
+    if (options?.silent) {
+      return new HttpContext().set(SKIP_ERROR_TOAST, true);
+    }
+    return undefined;
+  }
 
   getGroupInvite$(reservationId: string): Observable<GuestInvite> {
     return this.http
@@ -36,9 +48,11 @@ export class GroupOrdersService {
       );
   }
 
-  getSessions$(groupReservationId: string): Observable<GroupSessionsResponse> {
+  getSessions$(groupReservationId: string, options?: RequestOptions): Observable<GroupSessionsResponse> {
+    const context = this.createHttpContext(options);
     return this.http.get<GroupSessionsResponse>(
-      `${this.baseUrl}/guest/groups/${groupReservationId}/sessions`
+      `${this.baseUrl}/guest/groups/${groupReservationId}/sessions`,
+      context ? { context } : {}
     );
   }
 
@@ -48,9 +62,11 @@ export class GroupOrdersService {
       .pipe(map((res) => res.guestSessionId));
   }
 
-  getStatus$(groupReservationId: string): Observable<GroupStatusResponse> {
+  getStatus$(groupReservationId: string, options?: RequestOptions): Observable<GroupStatusResponse> {
+    const context = this.createHttpContext(options);
     return this.http.get<GroupStatusResponse>(
-      `${this.baseUrl}/guest/groups/${groupReservationId}/status`
+      `${this.baseUrl}/guest/groups/${groupReservationId}/status`,
+      context ? { context } : {}
     );
   }
 
