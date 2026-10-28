@@ -1,0 +1,40 @@
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.code-workspace
+
+# OS
+.DS_Store
+._*
+Thumbs.db
+
+# Node & Angular
+node_modules/
+.angular/
+dist/
+
+# Local env
+.env
+.env.local
+
+# .NET / C#
+bin/
+obj/
+*.user
+
+# Syndicate & Python
+.syndicate*
+syndicate_venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
