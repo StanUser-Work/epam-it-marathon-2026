@@ -40,6 +40,9 @@ export class GroupOrderPageComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly isModalOpen = signal(false);
 
+  readonly guestToRemove = signal<Participant | null>(null);
+  readonly isRemoving = signal(false);
+
   readonly lastUpdatedAt = signal<Date | null>(null);
   readonly refreshError = signal<string | null>(null);
 
@@ -209,6 +212,38 @@ export class GroupOrderPageComponent implements OnInit {
         error: () => {
           this.isSubmitting.set(false);
           this.isModalOpen.set(false);
+        },
+      });
+  }
+
+  openRemoveModal(person: Participant): void {
+    this.guestToRemove.set(person);
+  }
+
+  closeRemoveModal(): void {
+    this.guestToRemove.set(null);
+  }
+
+  confirmRemoveGuest(): void {
+    const guest = this.guestToRemove();
+    const groupId = this.groupReservationId();
+    if (!guest || !groupId || this.isRemoving()) {
+      return;
+    }
+
+    this.isRemoving.set(true);
+    this.groupOrdersService
+      .removeSession$(groupId, guest.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.participants.set(response.participants);
+          this.isRemoving.set(false);
+          this.guestToRemove.set(null);
+        },
+        error: () => {
+          this.isRemoving.set(false);
+          this.guestToRemove.set(null);
         },
       });
   }
