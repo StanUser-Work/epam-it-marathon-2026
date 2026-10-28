@@ -1,33 +1,115 @@
-<main class="page">
-  <header class="page-header">
-    <div class="title-row">
-      <h1>Group Pre-Order</h1>
-      <span class="badge">Collecting pre-orders</span>
+﻿<main class="page">
+  @if (isLoading()) {
+    <div class="state-container loading">
+      <p>Loading group order...</p>
     </div>
-
-    <div class="invite-info">
-      <p class="address">{{ invite().LocationAddress }}</p>
-      <p class="datetime">
-        {{ invite().StartTime | date:'mediumDate' }}, {{ invite().StartTime | date:'shortTime' }} � {{ invite().EndTime | date:'shortTime' }}
-      </p>
-      <p class="guests-count">
-        {{ participants().length }} of {{ invite().MaxGuestCount }} guests
-      </p>
+  } @else if (errorMessage()) {
+    <div class="state-container error">
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn btn-secondary" (click)="loadData()">Try again</button>
     </div>
-  </header>
+  } @else {
+    <header class="page-header">
+      <div class="title-row">
+        <h1>Group Pre-Order</h1>
+        @if (isSubmitted()) {
+          <span class="badge submitted">Sent to Restaurant</span>
+        } @else {
+          <span class="badge open">Collecting pre-orders</span>
+        }
+      </div>
 
-  <ul class="participants">
-    @for (person of participants(); track person.id) {
-      <li>
-        <app-participant-card [participant]="person" />
-      </li>
+      @if (inviteInfo(); as info) {
+        <div class="invite-info">
+          <p class="address">{{ info.LocationAddress }}</p>
+          <p class="datetime">
+            {{ info.StartTime | date:'mediumDate' }}, {{ info.StartTime | date:'shortTime' }} – {{ info.EndTime | date:'shortTime' }}
+          </p>
+          <p class="guests-count">
+            {{ participants().length }} of {{ info.MaxGuestCount }} guests
+          </p>
+        </div>
+      }
+    </header>
+
+    @if (!hasAnyDishesAdded()) {
+      <div class="state-container empty">
+        <p>Participants haven’t added any dishes yet</p>
+      </div>
+    } @else {
+      @if (!isSubmitted() && pendingCount() > 0) {
+        <div class="warning-banner" role="alert">
+          <p>{{ pendingWarningText() }}</p>
+        </div>
+      }
+
+      <ul class="participants">
+        @for (person of participants(); track person.id) {
+          <li>
+            <app-participant-card
+              [participant]="person"
+              [isOwner]="person.id === ownerSessionId()"
+            />
+          </li>
+        }
+      </ul>
+
+      @if (consolidatedOrder().items.length > 0) {
+        <section class="consolidated-section">
+          <h2>Consolidated pre-order</h2>
+          <ul class="consolidated-items">
+            @for (item of consolidatedOrder().items; track item.dish.id) {
+              <li class="consolidated-item">
+                <span class="name-qty">{{ item.dish.name }} &#215; {{ item.quantity }}</span>
+                <span class="price">{{ item.dish.price * item.quantity | currency }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <footer class="page-footer">
+        <div class="grand-total">
+          <span>Grand Total</span>
+          <span class="total-amount">{{ grandTotal() | currency }}</span>
+        </div>
+
+        @if (!isSubmitted()) {
+          <button
+            type="button"
+            class="btn btn-primary submit-btn"
+            [disabled]="!hasSubmittableDishes() || isSubmitting()"
+            (click)="openSubmitModal()"
+          >
+            Submit Pre-Order
+          </button>
+        }
+      </footer>
     }
-  </ul>
+  }
 
-  <footer class="page-footer">
-    <div class="grand-total">
-      <span>Grand Total</span>
-      <span class="total-amount">{{ total() | currency }}</span>
-    </div>
-  </footer>
+  @if (isModalOpen()) {
+    <app-modal (closed)="closeSubmitModal()">
+      <h2 modal-header>Submit Pre-Order</h2>
+      <div modal-body>
+        <p>Are you sure you want to submit the group pre-order to the restaurant?</p>
+        @if (pendingCount() > 0) {
+          <p class="modal-warning">
+            Note: {{ pendingCount() }} participants have not finished selecting their dishes and will not be included.
+          </p>
+        }
+      </div>
+      <div modal-actions>
+        <button type="button" class="btn btn-secondary" (click)="closeSubmitModal()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="isSubmitting()"
+          (click)="confirmSubmit()"
+        >
+          Submit
+        </button>
+      </div>
+    </app-modal>
+  }
 </main>

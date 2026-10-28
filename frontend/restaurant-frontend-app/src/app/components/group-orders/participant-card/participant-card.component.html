@@ -1,4 +1,4 @@
-<article class="card">
+﻿<article class="card">
   <div class="card-header">
     <h2 class="title">{{ title() }}</h2>
     @if (participant().isSubmitted) {
@@ -18,7 +18,7 @@
             <span class="avatar initial" aria-hidden="true">{{ item.dish.name.charAt(0) }}</span>
           }
           <p class="name">{{ item.dish.name }}</p>
-          <p class="qty">? {{ item.quantity }}</p>
+          <p class="qty">&#215; {{ item.quantity }}</p>
           <p class="price">{{ item.dish.price * item.quantity | currency }}</p>
         </li>
       }
