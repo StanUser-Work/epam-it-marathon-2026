@@ -1,0 +1,20 @@
+{
+  "name": "restaurant-aqa-framework",
+  "version": "1.0.0",
+  "description": "E2E & API test framework for Group Pre-Order (Levels 1, 2, 3)",
+  "scripts": {
+    "test": "playwright test",
+    "test:l1": "playwright test --grep @level1",
+    "test:l2": "playwright test --grep @level2",
+    "test:l3": "playwright test --grep @level3",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
+    "serve": "^14.2.6",
+    "typescript": "^5.6.0"
+  }
+}
