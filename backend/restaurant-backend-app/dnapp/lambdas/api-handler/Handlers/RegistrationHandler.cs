@@ -57,10 +57,10 @@ public class RegistrationHandler : IApiRequestHandler
             return ResponseBuilder.CreateErrorResponse(400, ex.Message, context.Logger);
         }
 
-        var registrationError = await TryRegisterUserAsync(registrationRequest);
+        var (registrationStatus, registrationError) = await TryRegisterUserAsync(registrationRequest);
         if (registrationError is not null)
         {
-            return ResponseBuilder.CreateErrorResponse(500, registrationError ?? "User registration failed", context.Logger);
+            return ResponseBuilder.CreateErrorResponse(registrationStatus, registrationError, context.Logger);
         }
 
         var confirmationError = await TryConfirmUserAsync(registrationRequest.Email);
@@ -92,7 +92,7 @@ public class RegistrationHandler : IApiRequestHandler
         }
     }
 
-    private async Task<string?> TryRegisterUserAsync(RegistrationRequest registrationRequest)
+    private async Task<(int StatusCode, string? Error)> TryRegisterUserAsync(RegistrationRequest registrationRequest)
     {
         var signUpRequest = new SignUpRequest
         {
@@ -110,11 +110,23 @@ public class RegistrationHandler : IApiRequestHandler
         {
             var result = await _cognitoClient.SignUpAsync(signUpRequest);
             var success = result.HttpStatusCode == HttpStatusCode.OK;
-            return success ? null : "User registration failed";
+            return success ? (200, null) : (500, "User registration failed");
+        }
+        catch (UsernameExistsException)
+        {
+            return (409, "A user with this email already exists");
+        }
+        catch (InvalidPasswordException ex)
+        {
+            return (400, ex.Message);
+        }
+        catch (InvalidParameterException ex)
+        {
+            return (400, ex.Message);
         }
         catch (Exception ex)
         {
-            return ex.Message;
+            return (500, ex.Message);
         }
     }
 

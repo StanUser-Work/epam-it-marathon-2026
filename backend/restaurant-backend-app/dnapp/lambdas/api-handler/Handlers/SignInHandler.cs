@@ -69,7 +69,7 @@ public class SignInHandler : IApiRequestHandler
             context.Logger.LogLine("User login succeeded");
             return response.AuthenticationResult;
         }
-        catch (NotAuthorizedException)
+        catch (Exception ex) when (ex is NotAuthorizedException or UserNotFoundException)
         {
             context.Logger.LogLine("Invalid email or password");
             return null;

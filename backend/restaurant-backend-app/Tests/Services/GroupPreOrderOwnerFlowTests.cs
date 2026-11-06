@@ -15,6 +15,7 @@ using APIHandler.Services.GroupReservations;
 using APIHandler.Services.GuestSessions;
 using APIHandler.Services.Locations;
 using Moq;
+using System.Text.Json;
 
 namespace APIHandler.Tests.Services;
 
@@ -302,5 +303,25 @@ public class GroupPreOrderOwnerFlowTests
         _sessions.Add(Guest("andrii", true, ("dish1", 2)));
 
         await Assert.ThrowsAsync<ActionForbiddenException>(() => _guestSessionService.DeleteGuestSessionAsync("someone-else", GroupId, "andrii"));
+    }
+
+    // ---------- Contract: response shape from homework-backend.md ----------
+
+    [Fact]
+    public async Task SessionsResponse_IsSerializedInCamelCase()
+    {
+        _sessions.Add(Guest("andrii", true, ("dish1", 2)));
+
+        var result = await _guestSessionService.GetAllSessionsAsync(OwnerId, GroupId);
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(result));
+
+        var root = json.RootElement;
+        Assert.True(root.TryGetProperty("participants", out var participants));
+        Assert.True(root.TryGetProperty("total", out _));
+        var guest = participants.EnumerateArray().Single(p => p.GetProperty("id").GetString() == "andrii");
+        Assert.Equal("Guest", guest.GetProperty("type").GetString());
+        Assert.Equal("andrii", guest.GetProperty("name").GetString());
+        Assert.True(guest.GetProperty("isSubmitted").GetBoolean());
+        Assert.Equal(2, guest.GetProperty("items")[0].GetProperty("quantity").GetInt32());
     }
 }
