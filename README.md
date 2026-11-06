@@ -1,5 +1,24 @@
 # Green & Tasty — Frontend · домашка IT Marathon 6.0
 
+## Розгорнуте середовище (для перевірки)
+
+| Що | Адреса |
+|---|---|
+| Frontend (CloudFront) | https://d2itb54hfo2xf3.cloudfront.net |
+| API (API Gateway, stage `develop`) | https://6p4vdewhse.execute-api.eu-central-1.amazonaws.com/develop |
+
+Як перевірити груповий pre-order (рівень 3, справжній API):
+1. **Sign In** / **Create an Account** → **Book a Table** на 2+ гостей (локація *48 Rustaveli Avenue*).
+2. **Reservations** → на картці бронювання кнопка **Group Pre-Order** (екран `/reservations/<id>/group-order`); Invite Link — у вікні підтвердження бронювання.
+3. Відкрити invite-посилання в іншому браузері / інкогніто — гість додає страви й підтверджує кошик.
+4. Зробити власний **Pre-order** (без нього бекенд поверне 400 на submit) → **Submit Pre-Order**.
+
+- Демо-дані середовища: `infra/seed/seed_demo_data.py`.
+- Автотести (UI + API, рівні 1–3) і пайплайн: `aqa/restaurant-aqa-framework/README.md`, `.github/workflows/aqa-pipeline.yml`.
+- Домашка Backend: `homework-backend.md` (реалізація — `backend/restaurant-backend-app`, unit-тести — `Tests/Services/GroupPreOrderOwnerFlowTests.cs`).
+
+---
+
 Фронтенд застосунку Green & Tasty (Angular 22) — стартовий код для домашнього завдання.
 Бекенду в цьому архіві немає: для рівнів 1–2 він не потрібен.
 
