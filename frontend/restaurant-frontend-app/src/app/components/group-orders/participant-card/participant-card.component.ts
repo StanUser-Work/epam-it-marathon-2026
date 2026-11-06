@@ -1,4 +1,4 @@
-﻿import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Participant } from '@app/models/group-orders/participant.model';
 
@@ -12,8 +12,12 @@ import { Participant } from '@app/models/group-orders/participant.model';
 export class ParticipantCardComponent {
   readonly participant = input.required<Participant>();
   readonly isOwner = input<boolean>(false);
+  readonly canRemove = input(false);
+
+  readonly removeClick = output<Participant>();
 
   readonly title = computed(() => {
-    return this.isOwner() ? 'My Pre-Order' : `Guest: ${this.participant().name}`;
+    const participant = this.participant();
+    return this.isOwner() ? 'My Pre-Order' : `${participant.type}: ${participant.name}`;
   });
 }

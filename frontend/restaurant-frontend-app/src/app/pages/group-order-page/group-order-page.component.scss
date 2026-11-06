@@ -1,4 +1,4 @@
-﻿@use 'app/shared/styles/abstracts/colors' as color;
+@use 'app/shared/styles/abstracts/colors' as color;
 
 .page {
   max-width: 800px;
@@ -44,16 +44,29 @@
           background-color: color.$green-100;
           color: color.$green-600;
         }
+
+        &.closed {
+          background-color: color.$neutral-200;
+          color: color.$neutral-700;
+        }
       }
     }
 
     .invite-info {
-      margin-top: 8px;
-      color: color.$neutral-600;
+      margin-top: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid color.$neutral-200;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      color: color.$neutral-700;
       font-size: 0.875rem;
 
       p {
-        margin: 4px 0;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
       }
     }
 
@@ -110,26 +123,6 @@
     .participant-item {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-
-      .participant-actions {
-        display: flex;
-        justify-content: flex-end;
-
-        .btn-remove-guest {
-          background: none;
-          border: none;
-          color: color.$red-400;
-          font-size: 0.8125rem;
-          cursor: pointer;
-          padding: 4px 8px;
-          text-decoration: underline;
-
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-      }
     }
   }
 
@@ -166,7 +159,6 @@
   .page-footer {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
     gap: 16px;
     border-top: 2px solid color.$neutral-200;
     padding-top: 16px;
@@ -174,15 +166,27 @@
     .grand-total {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 16px;
-      font-size: 1.25rem;
-      font-weight: 700;
+      font-size: 1.5rem;
+      font-weight: 600;
       color: color.$neutral-900;
+
+      .total-amount {
+        color: color.$green-600;
+      }
     }
 
     .submit-btn {
-      padding: 10px 24px;
+      width: 100%;
+      padding: 14px 24px;
       font-size: 1rem;
+      background: color.$green-gradient;
+
+      &:disabled {
+        background: color.$neutral-400;
+        opacity: 1;
+      }
     }
   }
 

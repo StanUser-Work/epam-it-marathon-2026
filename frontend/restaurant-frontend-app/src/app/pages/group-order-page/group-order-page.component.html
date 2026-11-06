@@ -1,4 +1,4 @@
-﻿<main class="page">
+<main class="page">
   @if (isLoading()) {
     <div class="state-container loading">
       <p>Loading group order...</p>
@@ -14,6 +14,8 @@
         <h1>Group Pre-Order</h1>
         @if (isSubmitted()) {
           <span class="badge submitted">Sent to Restaurant</span>
+        } @else if (isClosed()) {
+          <span class="badge closed">Closed</span>
         } @else {
           <span class="badge open">Collecting pre-orders</span>
         }
@@ -21,11 +23,20 @@
 
       @if (inviteInfo(); as info) {
         <div class="invite-info">
-          <p class="address">{{ info.LocationAddress }}</p>
-          <p class="datetime">
-            {{ info.StartTime | date:'mediumDate' }}, {{ info.StartTime | date:'shortTime' }} – {{ info.EndTime | date:'shortTime' }}
+          <p class="address">
+            <img src="assets/svg/location-green.svg" alt="" aria-hidden="true" width="16" height="16" />
+            {{ info.LocationAddress }}
+          </p>
+          <p class="date">
+            <img src="assets/svg/calendar-green.svg" alt="" aria-hidden="true" width="16" height="16" />
+            {{ info.StartTime | date:'mediumDate' }}
+          </p>
+          <p class="time">
+            <img src="assets/svg/clock-green.svg" alt="" aria-hidden="true" width="16" height="16" />
+            {{ info.StartTime | date:'HH:mm' }} – {{ info.EndTime | date:'HH:mm' }}
           </p>
           <p class="guests-count">
+            <img src="assets/svg/people-green.svg" alt="" aria-hidden="true" width="16" height="16" />
             {{ participants().length }} of {{ info.MaxGuestCount }} guests
           </p>
         </div>
@@ -33,11 +44,11 @@
 
       <div class="sync-bar">
         @if (refreshError()) {
-          <span class="sync-error">{{ refreshError() }}</span>
+          <span class="sync-error" role="status">Couldn't refresh. Showing data from {{ lastUpdatedAt() | date:'HH:mm:ss' }}</span>
         } @else if (lastUpdatedAt()) {
-          <span class="sync-time">Updated at {{ lastUpdatedAt() | date:'mediumTime' }}</span>
+          <span class="sync-time">Updated at {{ lastUpdatedAt() | date:'HH:mm:ss' }}</span>
         }
-        @if (!isSubmitted()) {
+        @if (isOpen()) {
           <button type="button" class="btn btn-refresh" (click)="refreshNow()">Refresh</button>
         }
       </div>
@@ -48,7 +59,7 @@
         <p>Participants haven’t added any dishes yet</p>
       </div>
     } @else {
-      @if (!isSubmitted() && pendingCount() > 0) {
+      @if (isOpen() && pendingCount() > 0) {
         <div class="warning-banner" role="alert">
           <p>{{ pendingWarningText() }}</p>
         </div>
@@ -60,19 +71,9 @@
             <app-participant-card
               [participant]="person"
               [isOwner]="person.id === ownerSessionId()"
+              [canRemove]="isOpen() && person.type === 'Guest' && person.id !== ownerSessionId()"
+              (removeClick)="openRemoveModal($event)"
             />
-            @if (!isSubmitted() && person.id !== ownerSessionId()) {
-              <div class="participant-actions">
-                <button
-                  type="button"
-                  class="btn btn-remove-guest"
-                  [attr.aria-label]="'Remove ' + person.name"
-                  (click)="openRemoveModal(person)"
-                >
-                  Remove Guest
-                </button>
-              </div>
-            }
           </li>
         }
       </ul>
@@ -101,7 +102,7 @@
           <button
             type="button"
             class="btn btn-primary submit-btn"
-            [disabled]="!hasSubmittableDishes() || isSubmitting()"
+            [disabled]="!isOpen() || !hasSubmittableDishes() || isSubmitting()"
             (click)="openSubmitModal()"
           >
             Submit Pre-Order
@@ -117,9 +118,7 @@
       <div modal-body>
         <p>Are you sure you want to submit the group pre-order to the restaurant?</p>
         @if (pendingCount() > 0) {
-          <p class="modal-warning">
-            Note: {{ pendingCount() }} participants have not finished selecting their dishes and will not be included.
-          </p>
+          <p class="modal-warning">{{ pendingWarningText() }}</p>
         }
       </div>
       <div modal-actions>

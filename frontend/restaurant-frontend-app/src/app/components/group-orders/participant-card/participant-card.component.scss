@@ -1,4 +1,4 @@
-﻿@use 'app/shared/styles/abstracts/colors' as color;
+@use 'app/shared/styles/abstracts/colors' as color;
 
 .card {
   border: 1px solid color.$neutral-200;
@@ -12,31 +12,36 @@
     align-items: center;
     margin-bottom: 16px;
 
-    .header-left {
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0;
+      color: color.$neutral-900;
+    }
+
+    .header-right {
       display: flex;
       align-items: center;
       gap: 12px;
+    }
 
-      .title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin: 0;
-        color: color.$neutral-900;
-      }
+    .btn-remove-guest {
+      background: none;
+      border: none;
+      border-bottom: 1px solid color.$neutral-900;
+      color: color.$neutral-900;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 4px 8px;
 
-      .btn-remove {
-        background: none;
-        border: none;
+      &:hover,
+      &:focus-visible {
         color: color.$red-400;
-        font-size: 0.8125rem;
-        cursor: pointer;
-        padding: 4px 6px;
-        border-radius: 4px;
-        text-decoration: underline;
-
-        &:hover {
-          background-color: color.$red-100;
-        }
+        border-bottom-color: color.$red-400;
       }
     }
 
@@ -80,8 +85,8 @@
           justify-content: center;
           width: 40px;
           height: 40px;
-          background-color: color.$neutral-200;
-          color: color.$neutral-600;
+          background-color: color.$green-100;
+          color: color.$green-600;
           font-weight: 600;
         }
       }

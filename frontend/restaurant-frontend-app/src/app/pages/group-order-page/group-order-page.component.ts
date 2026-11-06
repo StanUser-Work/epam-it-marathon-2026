@@ -1,4 +1,4 @@
-﻿import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin, of, Subscription, timer } from 'rxjs';
@@ -73,6 +73,10 @@ export class GroupOrderPageComponent implements OnInit {
   });
 
   readonly isSubmitted = computed(() => this.status() === 'Submitted');
+
+  readonly isClosed = computed(() => this.status() === 'Closed');
+
+  readonly isOpen = computed(() => this.status() === 'Open');
 
   ngOnInit(): void {
     const resId = this.route.snapshot.paramMap.get('reservationId') ?? '';
@@ -172,7 +176,7 @@ export class GroupOrderPageComponent implements OnInit {
         return of(null);
       }),
       catchError(() => {
-        this.refreshError.set("Couldn't refresh. Showing data from earlier.");
+        this.refreshError.set("Couldn't refresh");
         return of(null);
       })
     );
@@ -193,7 +197,7 @@ export class GroupOrderPageComponent implements OnInit {
   }
 
   confirmSubmit(): void {
-    if (this.isSubmitting() || !this.hasSubmittableDishes()) {
+    if (this.isSubmitting() || !this.isOpen() || !this.hasSubmittableDishes()) {
       return;
     }
 

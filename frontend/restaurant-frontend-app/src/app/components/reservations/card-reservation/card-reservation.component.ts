@@ -136,6 +136,8 @@ export class CardReservationComponent {
     );
   });
 
+  readonly isGroupReservation = computed(() => this.r().guestCount >= 2);
+
   readonly isAnonymous = computed(() => {
     return !this.r().customerId;
   });
@@ -173,6 +175,10 @@ export class CardReservationComponent {
       queryParams,
     });
   }
+  onGroupPreOrder(): void {
+    void this.router.navigate(['/reservations', this.r().id, 'group-order']);
+  }
+
   onPreOrderWaiter(): void {
     if (this.preOrderItemCount() > 0) {
       this.navigateToWaiterPreOrder();
