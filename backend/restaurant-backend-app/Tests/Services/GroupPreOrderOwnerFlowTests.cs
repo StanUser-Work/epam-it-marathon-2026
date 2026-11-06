@@ -109,6 +109,8 @@ public class GroupPreOrderOwnerFlowTests
     [Fact]
     public async Task GetAllSessions_ReturnsParticipantsWithTotals_AndOwnerFirst()
     {
+        _orderRepo.Setup(r => r.GetOrderByReservationIdAsync(ReservationId))
+            .ReturnsAsync(OwnerOrder(OrderStatus.Created, ("dish1", 1)));
         _sessions.Add(Guest("andrii", true, ("dish1", 2)));
         _sessions.Add(Guest("olena", false, ("dish2", 1)));
 
@@ -119,18 +121,16 @@ public class GroupPreOrderOwnerFlowTests
         Assert.Equal(ParticipantType.Owner, participants[0].Type);
         Assert.Equal(360, participants.Single(p => p.Id == "andrii").Total);
         Assert.Equal(220, participants.Single(p => p.Id == "olena").Total);
-        Assert.Equal(580, result.Total);
+        Assert.Equal(760, result.Total);
         Assert.False(participants.Single(p => p.Id == "olena").IsSubmitted);
     }
 
     [Fact]
-    public async Task GetAllSessions_EmptyGroup_ReturnsOnlyOwnerWithZeroTotal()
+    public async Task GetAllSessions_EmptyGroup_ReturnsNoParticipantsAndZeroTotal()
     {
         var result = await _guestSessionService.GetAllSessionsAsync(OwnerId, GroupId);
 
-        var owner = Assert.Single(result.Participants);
-        Assert.Equal(ParticipantType.Owner, owner.Type);
-        Assert.Empty(owner.Items);
+        Assert.Empty(result.Participants);
         Assert.Equal(0, result.Total);
     }
 
@@ -271,7 +271,7 @@ public class GroupPreOrderOwnerFlowTests
 
         Assert.DoesNotContain(result.Participants, p => p.Id == "andrii");
         Assert.Contains(result.Participants, p => p.Id == "olena");
-        Assert.Contains(result.Participants, p => p.Type == ParticipantType.Owner);
+        Assert.DoesNotContain(result.Participants, p => p.Type == ParticipantType.Owner);
         Assert.Equal(220, result.Total);
     }
 

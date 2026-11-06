@@ -360,7 +360,10 @@ public class GuestSessionService(
 
         var ownerName = await GetOwnerNameAsync(reservation.CustomerId, OwnerSessionHelper.DefaultOwnerName);
 
+        // The owner is listed once they have dishes in their own pre-order,
+        // so a group nobody has joined yet is returned as participants: [] and total: 0.
         var participants = sessions
+            .Where(s => !s.IsOwnerSession || (s.Dishes?.Count ?? 0) > 0)
             .OrderByDescending(s => s.IsOwnerSession)
             .Select(session =>
             {
