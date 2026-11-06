@@ -163,8 +163,8 @@ public class GroupReservationService(
 
         var sessions = await guestSessionRepository.GetAllByGroupReservationIdAsync(groupReservation.GroupReservationId);
 
-        var ownerSession = sessions.FirstOrDefault(s => s.IsOwnerSession || s.OwnerUserId == userId)
-            ?? throw new GuestSessionNotFoundException("Owner guest session not found for this reservation.");
+        var ownerSession = await OwnerSessionHelper.EnsureOwnerSessionAsync(
+            guestSessionRepository, orderRepository, groupReservation, reservation, sessions);
 
         return new OwnerSessionResponse(ownerSession.Id);
     }
@@ -187,10 +187,20 @@ public class GroupReservationService(
             throw new ValidationException("Group reservation does not belong to the specified reservation.");
         }
 
-        var order = await orderRepository.GetOrderByReservationIdAsync(reservationId)
-            ?? throw new ValidationException("Order not found.");
+        if (groupReservation.Status == GroupReservationStatus.Submitted)
+            throw new GroupReservationSubmittedException();
+
+        if (groupReservation.Status == GroupReservationStatus.Closed)
+            throw new GroupReservationExpiredException();
+
+        var order = await orderRepository.GetOrderByReservationIdAsync(reservationId);
+        if (order is null || order.Status == OrderStatus.Cancelled)
+            throw new ValidationException("Order not found.");
 
         var allSessions = await guestSessionRepository.GetAllByGroupReservationIdAsync(groupReservationId);
+        await OwnerSessionHelper.EnsureOwnerSessionAsync(
+            guestSessionRepository, orderRepository, groupReservation, reservation, allSessions);
+
         var submittedSessions = allSessions.Where(s => s.IsSubmitted).ToList();
 
         if (!submittedSessions.Any())
@@ -198,7 +208,7 @@ public class GroupReservationService(
             throw new ValidationException("No submitted sessions found.");
         }
 
-        var submittedDishes = submittedSessions.SelectMany(s => s.Dishes).ToList();
+        var submittedDishes = submittedSessions.SelectMany(s => s.Dishes ?? []).Where(d => d.Quantity > 0).ToList();
         if (!submittedDishes.Any())
         {
             throw new ValidationException("No dishes found in submitted sessions.");
