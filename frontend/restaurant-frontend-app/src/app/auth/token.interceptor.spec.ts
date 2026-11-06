@@ -12,10 +12,11 @@ describe('tokenInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let toastService: jasmine.SpyObj<ToastService>;
+  let authService: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(() => {
     toastService = jasmine.createSpyObj<ToastService>('ToastService', ['error']);
-    const authService = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', [
+    authService = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', [
       'getTokens',
     ]);
     authService.getTokens.and.returnValue(null);
@@ -59,5 +60,40 @@ describe('tokenInterceptor', () => {
 
     expect(toastService.error).not.toHaveBeenCalled();
     expect(receivedStatus).toBe(400);
+  });
+
+  describe('group pre-order Owner endpoints under /guest/groups/', () => {
+    const SESSIONS_URL = 'https://test.api/guest/groups/group-1/sessions';
+    const GUEST_URL = 'https://test.api/guest/sessions/session-1/dishes';
+
+    beforeEach(() => {
+      authService.getTokens.and.returnValue({ idToken: 'owner-id-token', accessToken: 'owner-access-token' });
+    });
+
+    it('attaches the Owner id token to /guest/groups/{id}/sessions', () => {
+      http.get(SESSIONS_URL).subscribe();
+
+      const req = httpMock.expectOne(SESSIONS_URL);
+      expect(req.request.headers.get('Authorization')).toBe('Bearer owner-id-token');
+      req.flush({ participants: [], total: 0 });
+    });
+
+    it('respects SKIP_ERROR_TOAST for silent background sync', () => {
+      http
+        .get(SESSIONS_URL, { context: new HttpContext().set(SKIP_ERROR_TOAST, true) })
+        .subscribe({ error: () => undefined });
+
+      httpMock.expectOne(SESSIONS_URL).flush({}, { status: 500, statusText: 'Server Error' });
+
+      expect(toastService.error).not.toHaveBeenCalled();
+    });
+
+    it('still leaves anonymous guest endpoints untouched', () => {
+      http.post(GUEST_URL, { dishId: 'd1', quantity: 1 }).subscribe();
+
+      const req = httpMock.expectOne(GUEST_URL);
+      expect(req.request.headers.has('Authorization')).toBeFalse();
+      req.flush({});
+    });
   });
 });

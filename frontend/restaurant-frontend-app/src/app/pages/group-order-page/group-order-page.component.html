@@ -3,6 +3,16 @@
     <div class="state-container loading">
       <p>Loading group order...</p>
     </div>
+  } @else if (submittedEarlier()) {
+    <header class="page-header">
+      <div class="title-row">
+        <h1>Group Pre-Order</h1>
+        <span class="badge submitted">Sent to Restaurant</span>
+      </div>
+    </header>
+    <div class="state-container submitted-earlier">
+      <p>The group pre-order has already been sent to the restaurant.</p>
+    </div>
   } @else if (errorMessage()) {
     <div class="state-container error">
       <p>{{ errorMessage() }}</p>

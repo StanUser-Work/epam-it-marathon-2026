@@ -29,6 +29,8 @@ export class GroupOrderPageComponent implements OnInit {
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** The group was submitted earlier: the API no longer exposes its invite, so only the final state is shown. */
+  readonly submittedEarlier = signal(false);
 
   readonly reservationId = signal<string>('');
   readonly groupReservationId = signal<string>('');
@@ -88,6 +90,7 @@ export class GroupOrderPageComponent implements OnInit {
     this.stopSync();
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.submittedEarlier.set(false);
     this.refreshError.set(null);
 
     const resId = this.reservationId();
@@ -127,7 +130,10 @@ export class GroupOrderPageComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading.set(false);
-          if (err?.status === 404) {
+          if (err?.status === 400 && err?.error?.errorCode === 'GroupReservationSubmitted') {
+            this.status.set('Submitted');
+            this.submittedEarlier.set(true);
+          } else if (err?.status === 404) {
             this.errorMessage.set('Group reservation not found');
           } else {
             this.errorMessage.set('Failed to load group order');

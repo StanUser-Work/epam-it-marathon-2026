@@ -1,4 +1,4 @@
-﻿import { HttpClient, HttpContext } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -40,7 +40,10 @@ export class GroupOrdersService {
 
   getGroupInvite$(reservationId: string): Observable<GuestInvite> {
     return this.http
-      .get<{ token: string }>(`${this.baseUrl}/reservations/${reservationId}/invite-token`)
+      // the page shows its own error state (incl. "already sent"), so no global error toast here
+      .get<{ token: string }>(`${this.baseUrl}/reservations/${reservationId}/invite-token`, {
+        context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+      })
       .pipe(
         switchMap(({ token }) =>
           this.http.get<GuestInvite>(`${this.baseUrl}/guest/invites/${token}`)
