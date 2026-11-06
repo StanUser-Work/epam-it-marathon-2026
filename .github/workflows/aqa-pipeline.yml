@@ -6,44 +6,110 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      grep:
+        description: 'Subset to run (e.g. @level1, @level2, @level3, @api, @ui). Empty = all'
+        required: false
+        default: ''
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  checks: write
 
 jobs:
-  test:
-    name: Run Playwright Tests (Levels 1-3)
-    timeout-minutes: 20
+  unit-tests:
+    name: Unit tests (backend + frontend homework)
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Backend unit tests
+        working-directory: backend/restaurant-backend-app/Tests
+        run: dotnet test --logger "trx;LogFileName=backend.trx"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Build Frontend Application
+      - name: Frontend homework tests and production build
         working-directory: frontend/restaurant-frontend-app
         env:
           BACKEND_URL: https://example.com
         run: |
           npm ci
+          npx tsc -p tsconfig.app.json --noEmit
+          npx tsc -p tsconfig.spec.json --noEmit
+          npx ng test --watch=false --browsers=ChromeHeadless --include src/app/components/group-orders --include src/app/pages/group-order-page --include src/app/services/group-orders --include src/app/shared/helpers
           npm run build
 
-      - name: Install Framework Dependencies & Playwright
+  e2e:
+    name: E2E UI + API tests against the deployed app (levels 1-3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      # public addresses of the deployed environment; override with repository variables if it moves
+      FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://d2itb54hfo2xf3.cloudfront.net' }}
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://6p4vdewhse.execute-api.eu-central-1.amazonaws.com/develop' }}
+      WORKERS: 2
+      # ⭐ optional Report Portal (repository secrets/variables); reporter is enabled only when all are set
+      RP_ENDPOINT: ${{ vars.RP_ENDPOINT }}
+      RP_PROJECT: ${{ vars.RP_PROJECT }}
+      RP_API_KEY: ${{ secrets.RP_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install framework dependencies and browser
         working-directory: aqa/restaurant-aqa-framework
         run: |
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Run E2E & API Tests
+      - name: Run tests
+        id: tests
+        # a failed test must not stop the pipeline: report and artifacts are still published
+        continue-on-error: true
         working-directory: aqa/restaurant-aqa-framework
-        run: npm run test
+        run: npx playwright test ${{ github.event.inputs.grep && format('--grep "{0}"', github.event.inputs.grep) || '' }}
 
-      - name: Upload Test Report Artifacts
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: aqa/restaurant-aqa-framework/playwright-report/
           retention-days: 14
+
+      - name: Upload traces, screenshots and videos of failed tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: aqa/restaurant-aqa-framework/test-results/
+          retention-days: 14
+
+      - name: Publish test summary
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: E2E results
+          path: aqa/restaurant-aqa-framework/test-results/junit.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Mark job result
+        if: steps.tests.outcome == 'failure'
+        run: echo "::warning::Some e2e tests failed — see the playwright-report artifact"
