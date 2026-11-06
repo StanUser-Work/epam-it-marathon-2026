@@ -2,7 +2,6 @@ using APIHandler.Constants.Orders;
 using APIHandler.Entities;
 using APIHandler.Repositories.GuestSessions;
 using APIHandler.Repositories.Orders;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,6 +16,12 @@ public static class OwnerSessionHelper
 {
     public const string DefaultOwnerName = "Owner";
 
+    /// <summary>
+    /// Deterministic id: parallel first requests (GET sessions + GET guest-session-id) write the same item
+    /// instead of creating two owner sessions.
+    /// </summary>
+    public static string OwnerSessionId(string groupReservationId) => $"owner-{groupReservationId}";
+
     public static async Task<GuestSession> EnsureOwnerSessionAsync(
         IGuestSessionRepository guestSessionRepository,
         IOrderRepository orderRepository,
@@ -24,14 +29,16 @@ public static class OwnerSessionHelper
         Reservation reservation,
         List<GuestSession> sessions)
     {
-        var ownerSession = sessions.FirstOrDefault(s => s.IsOwnerSession);
+        var ownerSessionId = OwnerSessionId(groupReservation.GroupReservationId);
+        var ownerSession = sessions.FirstOrDefault(s => s.IsOwnerSession && s.Id == ownerSessionId)
+            ?? sessions.FirstOrDefault(s => s.IsOwnerSession);
         var isNew = ownerSession is null;
 
         if (ownerSession is null)
         {
             ownerSession = new GuestSession
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = ownerSessionId,
                 GroupReservationId = groupReservation.GroupReservationId,
                 GuestName = DefaultOwnerName,
                 Dishes = [],

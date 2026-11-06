@@ -166,7 +166,7 @@ public class GroupPreOrderOwnerFlowTests
     {
         var result = await _groupReservationService.GetOwnerSessionIdAsync(OwnerId, ReservationId);
 
-        Assert.False(string.IsNullOrEmpty(result.GuestSessionId));
+        Assert.Equal($"owner-{GroupId}", result.GuestSessionId);
         _sessionRepo.Verify(r => r.SaveAsync(It.Is<GuestSession>(s => s.IsOwnerSession && s.Id == result.GuestSessionId)), Times.Once);
     }
 
